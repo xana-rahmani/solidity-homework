@@ -6,6 +6,8 @@ contract CustomERC20 {
     mapping (address => mapping(address => uint256)) private _allowancesExpireTime;
 
     uint256 private _totalSupply;
+    string public tokenName;
+	string public tokenSymbol;
 
     event Transfer(address sender, address recipient, uint256 amount);
     event Approval(address owner, address spender, uint256 amount);
@@ -16,12 +18,14 @@ contract CustomERC20 {
     bool private _paused;
     address private _pauser;
 
- constructor (uint256 total, address pauser) internal {
+    constructor (uint256 total,string memory _tokenName,string memory _tokenSymbol,address pauser) internal {
         _totalSupply = total;
+        tokenName = _tokenName;
+        tokenSymbol = _tokenSymbol;
         _pauser = pauser;
-        _balances[msg.sender] = _totalSupply;
+        _paused = true;
     }
-
+    
     modifier whenNotPaused() {
         require(!_paused);
         _;
@@ -83,6 +87,7 @@ contract CustomERC20 {
 
 
     function approve(address spender, uint256 amount, uint expireTime) public whenNotPaused returns (bool) {
+        require(spender != address(0));
         _approve(msg.sender, spender, amount);
         _approveExpireTime(msg.sender, spender, expireTime);
         return true;
@@ -113,6 +118,7 @@ contract CustomERC20 {
 
     function _burn(address account, uint256 amount) internal {
         require(account != address(0), "ERC20: burn from the zero address");
+        require(_balances[account] >= amount);
         _balances[account] = _balances[account] - amount;
         _totalSupply = _totalSupply - amount;
         emit Transfer(account, address(0), amount);
